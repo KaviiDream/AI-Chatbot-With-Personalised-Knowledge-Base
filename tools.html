@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Tools · G.C.E. O/L Study Helper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="index.html">
+            <span class="logo">O/L</span>
+            <div>
+                <h1>Study Helper</h1>
+                <p>Personalised prep for your G.C.E. Ordinary Level exams.</p>
+            </div>
+        </a>
+        <nav>
+            <a href="planner.html">Planner</a>
+            <a href="resources.html">Resources</a>
+            <a class="active" href="tools.html">Live Tools</a>
+            <a href="faq.html">FAQ</a>
+        </nav>
+        <a class="cta" href="planner.html">Start Planning</a>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <p class="eyebrow">Live Tools</p>
+            <h2>Stay accountable with daily nudges.</h2>
+            <p>Generate sprints, tick milestones, and refresh your mindset whenever you need a boost.</p>
+        </section>
+
+        <section class="tools" id="tools">
+            <div class="tool-card">
+                <h3>Daily Sprint Generator</h3>
+                <p>Need a quick 40-minute sprint idea? Tap to get a mix of recall, practice, and review.</p>
+                <button id="sprintButton" type="button">Generate sprint</button>
+                <p id="sprintOutput" class="tool-output">Waiting for your first sprint...</p>
+            </div>
+            <div class="tool-card">
+                <h3>Revision Timeline</h3>
+                <p>Tick off milestones to visualise your readiness.</p>
+                <ul id="timeline"></ul>
+                <div class="timeline-progress">
+                    <div id="timelineFill"></div>
+                </div>
+            </div>
+            <div class="tool-card">
+                <h3>Mindset vault</h3>
+                <p id="mindsetQuote">"Discipline is remembering what you want." – David Campbell</p>
+                <button id="quoteButton" type="button">New reminder</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>Built for Sri Lankan O/L candidates · Updated December 2025</p>
+        <small>Remember: small, consistent sessions outperform last-minute marathons.</small>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="uBz514QKNAzhlYwxpJ_ev";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Planner · G.C.E. O/L Study Helper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="index.html">
+            <span class="logo">O/L</span>
+            <div>
+                <h1>Study Helper</h1>
+                <p>Personalised prep for your G.C.E. Ordinary Level exams.</p>
+            </div>
+        </a>
+        <nav>
+            <a class="active" href="planner.html">Planner</a>
+            <a href="resources.html">Resources</a>
+            <a href="tools.html">Live Tools</a>
+            <a href="faq.html">FAQ</a>
+        </nav>
+        <a class="cta" href="resources.html">See Resources</a>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <p class="eyebrow">Planner</p>
+            <h2>Map out your week in minutes.</h2>
+            <p>Pick the subject, target hours, and the helper suggests a balanced plan with revision cues.</p>
+            <div class="planner-stats">
+                <div>
+                    <span>Days to exam</span>
+                    <strong>120</strong>
+                </div>
+                <div>
+                    <span>Subjects tracked</span>
+                    <strong>07</strong>
+                </div>
+                <div>
+                    <span>Hours logged</span>
+                    <strong id="hoursLogged">00</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="planner-layout">
+            <div class="planner-grid">
+                <form id="studyForm" class="planner-card">
+                    <label>
+                        Subject
+                        <select id="subject">
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Science">Science</option>
+                            <option value="English">English</option>
+                            <option value="Sinhala">Sinhala</option>
+                            <option value="History">History</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="ICT">ICT</option>
+                        </select>
+                    </label>
+                    <label>
+                        Focus topic
+                        <input id="topic" type="text" placeholder="e.g., Quadratic equations" required />
+                    </label>
+                    <label>
+                        Hours this week
+                        <input id="hours" type="number" min="1" max="20" value="4" required />
+                    </label>
+                    <label>
+                        Confidence level
+                        <div class="radio-row">
+                            <label><input type="radio" name="confidence" value="Low" checked />Low</label>
+                            <label><input type="radio" name="confidence" value="Medium" />Medium</label>
+                            <label><input type="radio" name="confidence" value="High" />High</label>
+                        </div>
+                    </label>
+                    <button type="submit">Generate focus block</button>
+                </form>
+                <div class="planner-card plan-output">
+                    <h3>Your focus block</h3>
+                    <div id="planResult">
+                        <p>Fill in the form to get a personalised routine.</p>
+                    </div>
+                </div>
+                <div class="planner-card tracker">
+                    <h3>Hour logger</h3>
+                    <label>
+                        Hours completed today
+                        <input id="logHours" type="number" min="0" max="12" value="2" />
+                    </label>
+                    <button id="logButton" type="button">Log hours</button>
+                    <div class="hours-progress">
+                        <span>Weekly goal</span>
+                        <div class="progress-bar"><div id="progressFill"></div></div>
+                        <span id="progressLabel">0 / 20 hrs</span>
+                    </div>
+                </div>
+            </div>
+            <div class="planner-card snapshot-card">
+                <h3>Weekly Focus Snapshot</h3>
+                <ul id="snapshotList">
+                    <li>Mathematics · Past paper drills · 6 hrs</li>
+                    <li>Science · Diagrams & labelling · 4 hrs</li>
+                    <li>English · Essay practice · 3 hrs</li>
+                </ul>
+                <p class="hint">Update this snapshot by logging hours and generating new focus blocks.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>Built for Sri Lankan O/L candidates · Updated December 2025</p>
+        <small>Remember: small, consistent sessions outperform last-minute marathons.</small>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="uBz514QKNAzhlYwxpJ_ev";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script>
+</body>
+</html>
