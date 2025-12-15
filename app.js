@@ -50,6 +50,71 @@ const progressLabel = document.getElementById("progressLabel");
 const logButton = document.getElementById("logButton");
 const logHoursInput = document.getElementById("logHours");
 const form = document.getElementById("studyForm");
+const themeToggle = document.getElementById("themeToggle");
+const themeToggleIcon = document.getElementById("themeToggleIcon");
+const rootElement = document.documentElement;
+const THEME_STORAGE_KEY = "ol-theme";
+
+function updateThemeToggleIcon(theme) {
+    if (!themeToggle || !themeToggleIcon) {
+        return;
+    }
+    const isDark = theme === "dark";
+    themeToggleIcon.textContent = isDark ? "☾" : "☀";
+    themeToggle.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+}
+
+function syncChatbotTheme(theme) {
+    const script = document.getElementById("uBz514QKNAzhlYwxpJ_ev");
+    if (script) {
+        script.setAttribute("data-theme", theme);
+    }
+    document.querySelectorAll("#chatbase-bubble-button, #chatbase-message-window").forEach(node => {
+        node.setAttribute("data-theme", theme);
+    });
+    if (typeof window.chatbase === "function") {
+        try {
+            window.chatbase("setTheme", theme);
+        } catch (error) {
+            // Ignore theme sync errors from the chatbot SDK.
+        }
+    }
+}
+
+function applyTheme(theme) {
+    rootElement.dataset.theme = theme;
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (error) {
+        // Storage might be unavailable; fail silently.
+    }
+    updateThemeToggleIcon(theme);
+    syncChatbotTheme(theme);
+    window.dispatchEvent(new CustomEvent("ol-theme-change", { detail: theme }));
+}
+
+const initialTheme = rootElement.dataset.theme || "dark";
+updateThemeToggleIcon(initialTheme);
+syncChatbotTheme(initialTheme);
+
+if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+        const nextTheme = (rootElement.dataset.theme || "dark") === "dark" ? "light" : "dark";
+        applyTheme(nextTheme);
+    });
+}
+
+if (window.MutationObserver) {
+    const chatbotObserver = new MutationObserver((_, observer) => {
+        const bubble = document.getElementById("chatbase-bubble-button");
+        const panel = document.getElementById("chatbase-message-window");
+        if (bubble || panel) {
+            syncChatbotTheme(rootElement.dataset.theme || "dark");
+            observer.disconnect();
+        }
+    });
+    chatbotObserver.observe(document.body, { childList: true, subtree: true });
+}
 
 function renderResources(filterSubject = "All") {
     if (!resourceGrid) {

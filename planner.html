@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +7,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script>
+        (function () {
+            const storageKey = "ol-theme";
+            let storedTheme;
+            try {
+                storedTheme = localStorage.getItem(storageKey);
+            } catch (error) {
+                storedTheme = null;
+            }
+            const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            const theme = storedTheme || (prefersDark ? "dark" : "light");
+            document.documentElement.dataset.theme = theme;
+        })();
+    </script>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -24,7 +38,12 @@
             <a href="tools.html">Live Tools</a>
             <a href="faq.html">FAQ</a>
         </nav>
-        <a class="cta" href="resources.html">See Resources</a>
+        <div class="header-actions">
+            <a class="cta" href="resources.html">See Resources</a>
+            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch to light mode">
+                <span id="themeToggleIcon">☾</span>
+            </button>
+        </div>
     </header>
 
     <main>
@@ -119,8 +138,6 @@
     </footer>
 
     <script src="app.js"></script>
-    <script>
-(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="uBz514QKNAzhlYwxpJ_ev";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
-</script>
+    <script src="chatbot-loader.js"></script>
 </body>
 </html>
