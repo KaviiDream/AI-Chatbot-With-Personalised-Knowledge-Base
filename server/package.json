@@ -1,0 +1,29 @@
+{
+  "name": "ol-study-helper-backend",
+  "version": "1.0.0",
+  "description": "Express + MongoDB backend for persisting G.C.E. O/L Study Helper data",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "express",
+    "mongodb",
+    "study-helper"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "mongodb-memory-server": "^10.1.4",
+    "mongoose": "^8.20.3",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

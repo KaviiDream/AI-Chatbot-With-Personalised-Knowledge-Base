@@ -32,8 +32,28 @@ const timelineSteps = [
     "Final 2-week revision sprint"
 ];
 
+const API_BASE_URL = window.__OL_API_BASE_URL__ || "http://localhost:4000/api";
+const USER_ID = "default-user";
+const MAX_SNAPSHOT_ITEMS = 5;
+const fallbackSnapshots = [
+    { subject: "Mathematics", topic: "Past paper drills", hours: 6 },
+    { subject: "Science", topic: "Diagrams & labelling", hours: 4 },
+    { subject: "English", topic: "Essay practice", hours: 3 }
+];
+const defaultTimelineState = timelineSteps.map(step => ({ step, completed: false }));
+
 const weeklyGoal = 20;
-let logged = 0;
+
+let plannerState = {
+    loggedHours: 0,
+    weeklyGoal,
+    snapshots: [],
+    lastPlan: null
+};
+
+let toolsState = {
+    timeline: defaultTimelineState.map(item => ({ ...item }))
+};
 
 const resourceGrid = document.getElementById("resourceGrid");
 const filterButtons = document.querySelectorAll(".filter-btn");
@@ -50,6 +70,7 @@ const progressLabel = document.getElementById("progressLabel");
 const logButton = document.getElementById("logButton");
 const logHoursInput = document.getElementById("logHours");
 const form = document.getElementById("studyForm");
+const planResult = document.getElementById("planResult");
 const themeToggle = document.getElementById("themeToggle");
 const themeToggleIcon = document.getElementById("themeToggleIcon");
 const rootElement = document.documentElement;
@@ -116,6 +137,189 @@ if (window.MutationObserver) {
     chatbotObserver.observe(document.body, { childList: true, subtree: true });
 }
 
+function clampHours(value) {
+    if (!Number.isFinite(Number(value))) {
+        return 0;
+    }
+    return Math.max(0, Math.min(Number(value), 200));
+}
+
+function getConfidenceAdvice(confidence = "Medium") {
+    const normalized = (confidence || "Medium").toLowerCase();
+    if (normalized === "low") {
+        return "Confidence low → add extra recap day.";
+    }
+    if (normalized === "medium") {
+        return "Confidence medium → close with a timed drill.";
+    }
+    return "Confidence high → turn last session into teaching.";
+}
+
+function renderPlan(plan) {
+    if (!planResult) {
+        return;
+    }
+    if (!plan) {
+        planResult.innerHTML = `
+            <p>Fill in the form to get a personalised routine.</p>
+        `;
+        return;
+    }
+    const hours = clampHours(plan.hours);
+    const sessions = Math.max(2, Math.ceil(hours / 2));
+    const minutes = sessions ? Math.round((hours * 60) / sessions) : 0;
+    planResult.innerHTML = `
+        <p><strong>${plan.subject}</strong> · ${plan.topic}</p>
+        <ul>
+            <li>Break it into ${sessions} sessions of ${minutes} minutes.</li>
+            <li>Start with 10-minute recall, then deep practice, end with reflection.</li>
+            <li>${getConfidenceAdvice(plan.confidence)}</li>
+        </ul>
+    `;
+}
+
+function renderSnapshots(list) {
+    if (!snapList) {
+        return;
+    }
+    const source = list && list.length ? list : fallbackSnapshots;
+    snapList.innerHTML = "";
+    source.slice(0, MAX_SNAPSHOT_ITEMS).forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `${item.subject} · ${item.topic} · ${item.hours} hrs`;
+        snapList.appendChild(li);
+    });
+}
+
+function addSnapshot(snapshot) {
+    if (!snapshot) {
+        return;
+    }
+    const clean = {
+        subject: snapshot.subject || "General",
+        topic: snapshot.topic || "Focus area",
+        hours: clampHours(snapshot.hours)
+    };
+    plannerState.snapshots = [clean, ...plannerState.snapshots].slice(0, MAX_SNAPSHOT_ITEMS);
+    renderSnapshots(plannerState.snapshots);
+}
+
+function hydratePlannerFromState() {
+    updateProgress();
+    renderSnapshots(plannerState.snapshots);
+    renderPlan(plannerState.lastPlan);
+}
+
+function renderTimeline() {
+    if (!timelineEl) {
+        return;
+    }
+    timelineEl.innerHTML = "";
+    toolsState.timeline.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+            <label>
+                <input type="checkbox" data-index="${index}" />
+                <span>${item.step}</span>
+            </label>
+        `;
+        const checkbox = li.querySelector("input");
+        checkbox.checked = Boolean(item.completed);
+        timelineEl.appendChild(li);
+    });
+}
+
+function applyRemotePlannerState(remote = {}) {
+    if (!remote) {
+        hydratePlannerFromState();
+        return;
+    }
+    if (Number.isFinite(Number(remote.loggedHours))) {
+        plannerState.loggedHours = clampHours(remote.loggedHours);
+    }
+    if (Number.isFinite(Number(remote.weeklyGoal)) && Number(remote.weeklyGoal) > 0) {
+        plannerState.weeklyGoal = Math.max(1, Math.min(Number(remote.weeklyGoal), 200));
+    }
+    if (Array.isArray(remote.snapshots)) {
+        plannerState.snapshots = remote.snapshots.slice(0, MAX_SNAPSHOT_ITEMS);
+    }
+    if (remote.lastPlan) {
+        plannerState.lastPlan = remote.lastPlan;
+    }
+    hydratePlannerFromState();
+}
+
+function applyRemoteToolsState(remote = {}) {
+    const incoming = Array.isArray(remote.timeline) ? remote.timeline : [];
+    toolsState.timeline = defaultTimelineState.map(item => {
+        const match = incoming.find(entry => entry.step === item.step);
+        return {
+            step: item.step,
+            completed: match ? Boolean(match.completed) : false
+        };
+    });
+    renderTimeline();
+    refreshTimelineProgress();
+}
+
+async function bootstrapRemoteState() {
+    if (typeof fetch !== "function") {
+        return;
+    }
+    try {
+        const response = await fetch(`${API_BASE_URL}/state/${USER_ID}`);
+        if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+        }
+        const payload = await response.json();
+        if (payload.planner) {
+            applyRemotePlannerState(payload.planner);
+        }
+        if (payload.tools) {
+            applyRemoteToolsState(payload.tools);
+        }
+    } catch (error) {
+        console.warn("State sync unavailable:", error.message);
+    }
+}
+
+async function persistPlannerState() {
+    if (typeof fetch !== "function") {
+        return;
+    }
+    try {
+        await fetch(`${API_BASE_URL}/state/${USER_ID}/planner`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                loggedHours: plannerState.loggedHours,
+                weeklyGoal: plannerState.weeklyGoal,
+                snapshots: plannerState.snapshots,
+                lastPlan: plannerState.lastPlan
+            })
+        });
+    } catch (error) {
+        console.warn("Unable to save planner state:", error.message);
+    }
+}
+
+async function persistToolsState() {
+    if (typeof fetch !== "function") {
+        return;
+    }
+    try {
+        await fetch(`${API_BASE_URL}/state/${USER_ID}/tools`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                timeline: toolsState.timeline
+            })
+        });
+    } catch (error) {
+        console.warn("Unable to save tools state:", error.message);
+    }
+}
+
 function renderResources(filterSubject = "All") {
     if (!resourceGrid) {
         return;
@@ -149,16 +353,19 @@ if (resourceGrid) {
         });
     });
 }
+hydratePlannerFromState();
 
 function updateProgress() {
     if (!progressFill || !progressLabel) {
         return;
     }
-    const percentage = Math.min((logged / weeklyGoal) * 100, 100);
+    const goal = Math.max(1, plannerState.weeklyGoal || weeklyGoal);
+    const loggedHours = Math.min(clampHours(plannerState.loggedHours), goal);
+    const percentage = Math.min((loggedHours / goal) * 100, 100);
     progressFill.style.width = `${percentage}%`;
-    progressLabel.textContent = `${logged} / ${weeklyGoal} hrs`;
+    progressLabel.textContent = `${loggedHours} / ${goal} hrs`;
     if (hoursLoggedEl) {
-        hoursLoggedEl.textContent = logged.toString().padStart(2, "0");
+        hoursLoggedEl.textContent = loggedHours.toString().padStart(2, "0");
     }
 }
 
@@ -167,22 +374,16 @@ if (progressFill && progressLabel && logButton && logHoursInput) {
     logButton.addEventListener("click", () => {
         const value = Number(logHoursInput.value);
         if (!Number.isNaN(value) && value >= 0) {
-            logged = Math.min(logged + value, weeklyGoal);
+            const increment = clampHours(value);
+            const goal = Math.max(1, plannerState.weeklyGoal || weeklyGoal);
+            plannerState.loggedHours = Math.min(
+                clampHours((plannerState.loggedHours || 0) + increment),
+                goal
+            );
             updateProgress();
+            persistPlannerState();
         }
     });
-}
-
-function updateSnapshot(subject, topic, hours) {
-    if (!snapList) {
-        return;
-    }
-    const newItem = document.createElement("li");
-    newItem.textContent = `${subject} · ${topic} · ${hours} hrs`;
-    snapList.insertBefore(newItem, snapList.firstChild);
-    if (snapList.children.length > 5) {
-        snapList.removeChild(snapList.lastChild);
-    }
 }
 
 if (form) {
@@ -192,17 +393,11 @@ if (form) {
         const topic = document.getElementById("topic").value;
         const hours = Number(document.getElementById("hours").value);
         const confidence = form.querySelector("input[name='confidence']:checked").value;
-        const sessions = Math.max(2, Math.ceil(hours / 2));
-        const minutes = Math.round((hours * 60) / sessions);
-        document.getElementById("planResult").innerHTML = `
-            <p><strong>${subject}</strong> · ${topic}</p>
-            <ul>
-                <li>Break it into ${sessions} sessions of ${minutes} minutes.</li>
-                <li>Start with 10-minute recall, then deep practice, end with reflection.</li>
-                <li>Confidence ${confidence.toLowerCase()} → ${confidence === "Low" ? "add extra recap day." : confidence === "Medium" ? "close with a timed drill." : "turn last session into teaching."}</li>
-            </ul>
-        `;
-        updateSnapshot(subject, topic, hours);
+        const plan = { subject, topic, hours, confidence };
+        plannerState.lastPlan = plan;
+        renderPlan(plan);
+        addSnapshot({ subject, topic, hours });
+        persistPlannerState();
     });
 }
 
@@ -220,34 +415,32 @@ if (quoteButton && mindsetQuote) {
     });
 }
 
-function initTimeline() {
-    if (!timelineEl) {
-        return;
-    }
-    timelineSteps.forEach((step, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-            <label>
-                <input type="checkbox" data-index="${index}" />
-                <span>${step}</span>
-            </label>
-        `;
-        timelineEl.appendChild(li);
-    });
-}
-
 function refreshTimelineProgress() {
-    if (!timelineEl || !timelineFill) {
+    if (!timelineFill) {
         return;
     }
-    const checkboxes = Array.from(timelineEl.querySelectorAll("input[type='checkbox']"));
-    const completed = checkboxes.filter(cb => cb.checked).length;
-    const percent = (completed / checkboxes.length) * 100;
+    const total = toolsState.timeline.length || timelineSteps.length || 1;
+    const completed = toolsState.timeline.filter(item => item.completed).length;
+    const percent = (completed / total) * 100;
     timelineFill.style.width = `${percent}%`;
 }
 
 if (timelineEl) {
-    initTimeline();
+    renderTimeline();
     refreshTimelineProgress();
-    timelineEl.addEventListener("change", refreshTimelineProgress);
+    timelineEl.addEventListener("change", event => {
+        const target = event.target;
+        if (!target || target.type !== "checkbox") {
+            return;
+        }
+        const index = Number(target.dataset.index);
+        if (!Number.isInteger(index) || !toolsState.timeline[index]) {
+            return;
+        }
+        toolsState.timeline[index].completed = target.checked;
+        refreshTimelineProgress();
+        persistToolsState();
+    });
 }
+
+bootstrapRemoteState();
